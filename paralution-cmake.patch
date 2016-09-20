@@ -1,0 +1,11 @@
+--- paralution-1.1.0/CMakeLists.txt.org	2016-09-20 19:27:18.387708332 +0200
++++ paralution-1.1.0/CMakeLists.txt	2016-09-20 19:27:44.812545573 +0200
+@@ -109,7 +109,7 @@
+ 
+ #######################################################################################################################
+ # OpenCL - only compile OpenCL when CUDA is not picked
+-find_package(OpenCL)
++#find_package(OpenCL)
+ if (NOT OPENCL_FOUND)
+   message("-- OpenCL not found. Compiling WITHOUT OpenCL support.")
+ else()
