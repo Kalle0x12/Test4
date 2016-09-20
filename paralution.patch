@@ -1,0 +1,12 @@
+--- paralution-1.1.0/src/base/backend_manager.cpp	2016-01-19 08:14:41.000000000 +0100
++++ ../paralution-1.1.0/src/base/backend_manager.cpp	2016-04-23 19:07:47.000000000 +0200
+@@ -768,7 +768,8 @@
+               Paralution_Object_Data_Tracking.all_obj[i]);
+ 
+   }
+-
++  // Hotfix: https://www.paralution.com/forums/topic/second-initialization-throws-error/
++  Paralution_Object_Data_Tracking.all_obj.clear();
+   LOG_DEBUG(0, "_paralution_delete_all_obj()",
+             "* end");
+ #endif
