@@ -5,4 +5,4 @@ rm -rf build
 rm -rf tmp
 rm -rf dist
 rm -f *.log
-rm -rf lis_wrapper.egg-info
+rm -rf paralution_wrapper.egg-info
