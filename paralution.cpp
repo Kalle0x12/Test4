@@ -14,7 +14,7 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
         py::array_t<int> index, py::array_t<T, py::array::c_style> x_vec, py::array_t<T, py::array::c_style> b_vec,
         int info, double abs_tol, double rel_tol, double div_tol, int max_iter) {
 
-    double tick, tack, start;
+    double tock, tick, start;
     int nnz, len_xarr;
 
     py::buffer_info info_values = values.request();
@@ -33,8 +33,8 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     start = paralution_time();
     init_paralution();
     if (info == 1) info_paralution();
-    tick = paralution_time();
-    cout << "Solver  init: " << (tick - start) / 1000000 << " sec" << endl;
+    tock = paralution_time();
+    cout << "Solver  init: " << (tock - start) / 1000000 << " sec" << endl;
 
     LocalVector<T> x;
     LocalVector<T> rhs;
@@ -54,9 +54,9 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     rhs.Allocate("rhs", len_xarr);
     rhs.CopyFromData(b_arr);
     rhs.MoveToAccelerator();
-    tack = paralution_time();
-    cout << "Solver allocate: " << (tack - tick) / 1000000 << " sec" << endl;
     tick = paralution_time();
+    cout << "Solver allocate: " << (tick - tock) / 1000000 << " sec" << endl;
+    tock = paralution_time();
     // Linear Solver
     CG<LocalMatrix<T>, LocalVector<T>, T> ls;
     //CR<LocalMatrix<float>, LocalVector<float>, float> ls; // faster than CG
@@ -90,26 +90,26 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     //        rhs.MoveToAccelerator();
     //        x.MoveToAccelerator();
     //        ls.MoveToAccelerator();
-    tack = paralution_time();
-    cout << "Solver setup + Build: " << (tack - tick) / 1000000 << " sec" << endl;
+    tick = paralution_time();
+    cout << "Solver setup + Build: " << (tick - tock) / 1000000 << " sec" << endl;
 
-    tick = paralution_time();
+    tock = paralution_time();
     ls.Solve(rhs, &x);
-    tack = paralution_time();
-    cout << "Solver Solve:" << (tack - tick) / 1000000 << " sec" << endl;
     tick = paralution_time();
+    cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
+    tock = paralution_time();
     x.MoveToHost();
     x.CopyToData(x_arr);
-    tack = paralution_time();
-    cout << "Solver copy result:" << (tack - tick) / 1000000 << " sec" << endl;
+    tick = paralution_time();
+    cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
 
     cout << "Free memory" << endl;
-    tick = paralution_time();
+    tock = paralution_time();
     ls.Clear();
     stop_paralution();
-    tack = paralution_time();
-    cout << "Solver free + stop:" << (tack - tick) / 1000000 << " sec" << endl;
-    cout << "Solver total:" << (tack - start) / 1000000 << " sec" << endl;
+    tick = paralution_time();
+    cout << "Solver free + stop:" << (tick - tock) / 1000000 << " sec" << endl;
+    cout << "Solver total:" << (tick - start) / 1000000 << " sec" << endl;
 }
 
 PYBIND11_PLUGIN(paralution_wrapper) {
