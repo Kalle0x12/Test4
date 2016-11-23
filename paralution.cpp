@@ -35,24 +35,35 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     if (info == 1) info_paralution();
     tock = paralution_time();
     cout << "Solver  init: " << (tock - start) / 1000000 << " sec" << endl;
-
+    //initialize paralution vector/matrix objects
     LocalVector<T> x;
     LocalVector<T> rhs;
     LocalMatrix<T> mat;
+  
+    //deep copy
+    //mat.AllocateCSR("A", nnz, len_xarr, len_xarr);
+    //mat.CopyFromCSR(ind, col, val);
 
-    mat.AllocateCSR("A", nnz, len_xarr, len_xarr);
-    mat.CopyFromCSR(ind, col, val);
+    //shallow copy
+    //call setDataPtr* for all objects/passed from put on buffers
+    //the passed pointers will be set to NULL!!
+
+    cout << "A" << endl;
+    mat.SetDataPtrCSR(&ind, &col, &val, "A", nnz, len_xarr, len_xarr);
     mat.MoveToAccelerator();
     mat.info();
 
     cout << "x" << endl;
-    x.Allocate("x", len_xarr);
-    x.CopyFromData(x_arr);
+    //x.Allocate("x", len_xarr);
+    //x.CopyFromData(x_arr);
+    x.SetDataPtr(&x_arr, "x", len_xarr);
     x.MoveToAccelerator();
+    x.info();
 
     cout << "rhs" << endl;
-    rhs.Allocate("rhs", len_xarr);
-    rhs.CopyFromData(b_arr);
+    //rhs.Allocate("rhs", len_xarr);
+    //rhs.CopyFromData(b_arr);
+    rhs.SetDataPtr(&b_arr, "rhs", len_xarr);
     rhs.MoveToAccelerator();
     tick = paralution_time();
     cout << "Solver allocate: " << (tick - tock) / 1000000 << " sec" << endl;
@@ -98,8 +109,16 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     tick = paralution_time();
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
+    mat.MoveToHost();
+    rhs.MoveToHost();
     x.MoveToHost();
-    x.CopyToData(x_arr);
+    //deep copy x to python
+    //x.CopyToData(x_arr);
+    // call LeaveDataPtr for all objects/buffers 
+    mat.LeaveDataPtrCSR(&ind, &col, &val);
+    rhs.LeaveDataPtr(&b_arr);
+    //shallow copy x to python
+    x.LeaveDataPtr(&x_arr);
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
 
