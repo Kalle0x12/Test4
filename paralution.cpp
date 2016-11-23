@@ -45,9 +45,12 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     //mat.CopyFromCSR(ind, col, val);
 
     //shallow copy
-    //call setDataPtr* for all objects/passed from put on buffers
+    //call setDataPtr* for all objects passed from input
     //the passed pointers will be set to NULL!!
-
+    //hence it is important to call LeaveDataPtr* for all!! these objects
+    //to get back there original values before this function returns
+    //otherwise python will segfault
+    
     cout << "A" << endl;
     mat.SetDataPtrCSR(&ind, &col, &val, "A", nnz, len_xarr, len_xarr);
     mat.MoveToAccelerator();
@@ -109,15 +112,18 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     tick = paralution_time();
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
+    
     mat.MoveToHost();
     rhs.MoveToHost();
     x.MoveToHost();
+    
     //deep copy x to python
     //x.CopyToData(x_arr);
-    // call LeaveDataPtr for all objects/buffers 
+    
+    // shallow copy
+    // call LeaveDataPtr for all!!! objects/buffers that were created by SetDataPtr 
     mat.LeaveDataPtrCSR(&ind, &col, &val);
     rhs.LeaveDataPtr(&b_arr);
-    //shallow copy x to python
     x.LeaveDataPtr(&x_arr);
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
