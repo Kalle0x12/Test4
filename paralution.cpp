@@ -20,21 +20,18 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     init_paralution();
     py::buffer_info info_values = values.request();
     auto val = static_cast<T *> (info_values.ptr);
-    //auto valh = val;
     nnz = info_values.shape[0];
     py::buffer_info info_columns = columns.request();
     auto col = static_cast<int *> (info_columns.ptr);
-    //auto colh = col;
     py::buffer_info info_index = index.request();
     auto ind = static_cast<int *> (info_index.ptr);
-    //auto indh = ind;
     py::buffer_info info_x = x_vec.request();
     auto x_arr = static_cast<T *> (info_x.ptr);
+    // save x_arr
     auto x_arrh = x_arr;
     len_xarr = info_x.shape[0];
     py::buffer_info info_b = b_vec.request();
     auto b_arr = static_cast<T *> (info_b.ptr);
-    //auto b_arrh = b_arr;
     start = paralution_time();
     //init_paralution();
     if (info == 1) info_paralution();
@@ -44,9 +41,6 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     LocalVector<T> x;
     LocalVector<T> rhs;
     LocalMatrix<T> mat;
-    //x.MoveToAccelerator(); 
-    //rhs.MoveToAccelerator(); 
-    //mat.MoveToAccelerator(); 
     //deep copy
     //mat.AllocateCSR("A", nnz, len_xarr, len_xarr);
     //mat.CopyFromCSR(ind, col, val);
@@ -57,7 +51,7 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     //hence it is important to call LeaveDataPtr* for all!! these objects
     //to get back there original values before this function returns
     //otherwise python will segfault
-    
+
     cout << "col: " << col << endl;
     cout << "val: " << val << endl;
     cout << "ind: " << ind << endl;
@@ -69,9 +63,10 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     mat.info();
 
     cout << "x" << endl;
+    // deep copy
     //x.Allocate("x", len_xarr);
     //x.CopyFromData(x_arr);
-    
+
     cout << "x_arr: " << x_arr << endl;
     cout << "x_arrh: " << x_arrh << endl;
     x.SetDataPtr(&x_arr, "x", len_xarr);
@@ -79,69 +74,51 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "x_arrh: " << x_arrh << endl;
     x.info();
     cout << "rhs" << endl;
+    // deep copy
     //rhs.Allocate("rhs", len_xarr);
     //rhs.CopyFromData(b_arr);
     cout << "b_arr: " << b_arr << endl;
     rhs.SetDataPtr(&b_arr, "rhs", len_xarr);
     cout << "b_arr: " << b_arr << endl;
+    // MyMoveToAccelerator avoids free() of the buffers passed from python later 
+    // in stop_paralution
+    x.MyMoveToAccelerator();
+    rhs.MyMoveToAccelerator();
+    mat.MyMoveToAccelerator();
+    x.info();
+    rhs.info();
+    mat.info();
+    
     tick = paralution_time();
     cout << "Solver allocate: " << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
     // Linear Solver
     CG<LocalMatrix<T>, LocalVector<T>, T> ls;
-    //CR<LocalMatrix<float>, LocalVector<float>, float> ls; // faster than CG
-    //FixedPoint<LocalMatrix<float>, LocalVector<float>, float> ls;  //diverges
-    //ls.SetRelaxation(1.5);
     // Preconditioner
-    Jacobi<LocalMatrix<T>, LocalVector<T>, T > p; //OK with CUDA
-    //ILU<LocalMatrix<float>, LocalVector<float>, float> p;  //needs a lot of memory with CUDA. rel. slow
-    //MultiColoredSGS<LocalMatrix<float>, LocalVector<float>, float> p; //LocalMatrix::ExtractSubMatrix() is performed on the host due to size = 1
-    //p.SetRelaxation(1.5);
-    //SGS<LocalMatrix<float>, LocalVector<float>, float > p; //slow
-    //GS<LocalMatrix<float>, LocalVector<float>, float > p; //extremely slow
-
-    //TNS<LocalMatrix<float>, LocalVector<float>, float > p; //
-    // explicit (false) or implicit (true)
-    //p.Set(true);  //false: CUDA out of memory, true: medium slow
-
-    // Build only on host
-    //SPAI<LocalMatrix<float>, LocalVector<float>, float > p;
-    //MultiColoredILU<LocalMatrix<float>, LocalVector<float>, float> p;  //does run
-    //MultiColoredGS<LocalMatrix<float>, LocalVector<float>, float> p;  //extremely slow
-    //p.SetRelaxation(1.9);
-
+    Jacobi<LocalMatrix<T>, LocalVector<T>, T > p;
     ls.SetOperator(mat);
     // initialize linear solver
     ls.Init(abs_tol, rel_tol, div_tol, max_iter);
     ls.SetPreconditioner(p);
     ls.Build();
     ls.Verbose(1);
-    
+
     tick = paralution_time();
     cout << "Solver setup + Build: " << (tick - tock) / 1000000 << " sec" << endl;
 
-    ls.MoveToAccelerator();
-    x.MyMoveToAccelerator(); 
-    rhs.MyMoveToAccelerator(); 
-    mat.MyMoveToAccelerator(); 
-    x.info();
-    rhs.info();
-    mat.info();
     tock = paralution_time();
     ls.Solve(rhs, &x);
     tick = paralution_time();
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
-    
-    ls.MoveToHost(); 
+
+    ls.MoveToHost();
     mat.MoveToHost();
     rhs.MoveToHost();
     x.MoveToHost();
-    //deep copy x to python
+    //deep copy x back to python
     x.CopyToData(x_arrh);
-    
-    // shallow copy
-    // call LeaveDataPtr for all!!! objects/buffers that were created by SetDataPtr 
+    // call LeaveDataPtr* for all!!! objects/buffers that were created by SetDataPtr 
     cout << "col: " << col << endl;
     cout << "val: " << val << endl;
     cout << "ind: " << ind << endl;
@@ -157,22 +134,16 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     x.LeaveDataPtr(&x_arr);
     cout << "x_arr: " << x_arr << endl;
     cout << "x_arrh: " << x_arrh << endl;
-    //x.CopyToData(x_arrh);
-    //x.CopyToData(x_arr);
-    for (int i=0; i<len_xarr; i++){
-    cout << x_arr[i] << endl;
-    //x_arrh[i]=x_arr[i];
-    cout << x_arrh[i] << endl;
-}
-
-    //x.CopyToData(x_arr);
-    cout << "x_arr: " << x_arr << endl;
+    //    for (int i = 0; i < len_xarr; i++) {
+    //        cout << x_arr[i] << endl;
+    //        cout << x_arrh[i] << endl;
+    //    }
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
 
     cout << "Free memory" << endl;
     tock = paralution_time();
-    //ls.Clear();
+    ls.Clear();
     stop_paralution();
     tick = paralution_time();
     cout << "Solver free + stop:" << (tick - tock) / 1000000 << " sec" << endl;
@@ -193,4 +164,3 @@ PYBIND11_PLUGIN(paralution_wrapper) {
 
     return m.ptr();
 }
-
