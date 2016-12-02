@@ -36,11 +36,13 @@ ext_modules = [
               #get_pybind_include(),
               #get_pybind_include(user=True),
               pwd + '/pybind11/include',
-              pwd + '/paralution-1.1.0/build/inc'
+              pwd + '/paralution-1.1.0/build/inc',
+              #'../paralution-1.1.0/build/inc',
               ],
               extra_compile_args=["-fopenmp"],
               extra_link_args=["-fopenmp"],
               library_dirs=[pwd + '/paralution-1.1.0/build/lib'],
+              #library_dirs=['../paralution-1.1.0/build/lib'],
               libraries=['paralution'],
               language='c++'
               )

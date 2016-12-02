@@ -99,7 +99,7 @@ print(y)
 print("b:")
 print(b)
 print()
-
+#stop
 print("Test with single precision")
 A = np.zeros((8, 8), dtype=np.float32)
 A[0, 0] = 7.0
