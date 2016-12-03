@@ -84,7 +84,7 @@ paralution_wrapper.solution(Acsr_full.data, Acsr_full.indices, Acsr_full.indptr,
                             x, b, info, abstol, reltol, divtol, max_iter)
 
 # check solution x with original dense matrix A first
-# convert upper triangular matrix AA to 'full' matrix
+# convert upper triangular matrix A to 'full' matrix
 y = (A + A.T - np.eye(A.shape[0]) * A.diagonal()).dot(x)
 assert (np.allclose(b, y))
 

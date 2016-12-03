@@ -28,7 +28,7 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     py::buffer_info info_x = x_vec.request();
     auto x_arr = static_cast<T *> (info_x.ptr);
     // save x_arr
-    auto x_arrh = x_arr;
+    auto x_arr_bak = x_arr;
     len_xarr = info_x.shape[0];
     py::buffer_info info_b = b_vec.request();
     auto b_arr = static_cast<T *> (info_b.ptr);
@@ -68,10 +68,10 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     //x.CopyFromData(x_arr);
 
     cout << "x_arr: " << x_arr << endl;
-    cout << "x_arrh: " << x_arrh << endl;
+    cout << "x_arr_bak: " << x_arr_bak << endl;
     x.SetDataPtr(&x_arr, "x", len_xarr);
     cout << "x_arr: " << x_arr << endl;
-    cout << "x_arrh: " << x_arrh << endl;
+    cout << "x_arr_bak: " << x_arr_bak << endl;
     x.info();
     cout << "rhs" << endl;
     // deep copy
@@ -80,20 +80,25 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "b_arr: " << b_arr << endl;
     rhs.SetDataPtr(&b_arr, "rhs", len_xarr);
     cout << "b_arr: " << b_arr << endl;
-    // MyMoveToAccelerator avoids free() of the buffers passed from python later 
-    // in stop_paralution
+    // MyMoveToAccelerator avoids free() of the buffers passed from python  
+    // in stop_paralution()
+    cout << "x_arr: " << x_arr << endl;
+    cout << "x_arr_bak: " << x_arr_bak << endl;
     x.MyMoveToAccelerator();
+    cout << "x_arr: " << x_arr << endl;
+    cout << "x_arr_bak: " << x_arr_bak << endl;
     rhs.MyMoveToAccelerator();
     mat.MyMoveToAccelerator();
     x.info();
     rhs.info();
     mat.info();
-    
+
     tick = paralution_time();
     cout << "Solver allocate: " << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
     // Linear Solver
     CG<LocalMatrix<T>, LocalVector<T>, T> ls;
+    ls.MoveToAccelerator();
     // Preconditioner
     Jacobi<LocalMatrix<T>, LocalVector<T>, T > p;
     ls.SetOperator(mat);
@@ -112,38 +117,25 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
 
-    ls.MoveToHost();
-    mat.MoveToHost();
-    rhs.MoveToHost();
+    //mat.MoveToHost();
+    //rhs.MoveToHost();
     x.MoveToHost();
     //deep copy x back to python
-    x.CopyToData(x_arrh);
+    x.CopyToData(x_arr_bak);
     // call LeaveDataPtr* for all!!! objects/buffers that were created by SetDataPtr 
-    cout << "col: " << col << endl;
-    cout << "val: " << val << endl;
-    cout << "ind: " << ind << endl;
-    mat.LeaveDataPtrCSR(&ind, &col, &val);
-    cout << "col: " << col << endl;
-    cout << "val: " << val << endl;
-    cout << "ind: " << ind << endl;
-    cout << "b_arr: " << b_arr << endl;
-    rhs.LeaveDataPtr(&b_arr);
-    cout << "b_arr: " << b_arr << endl;
-    cout << "x_arr: " << x_arr << endl;
-    cout << "x_arrh: " << x_arrh << endl;
-    x.LeaveDataPtr(&x_arr);
-    cout << "x_arr: " << x_arr << endl;
-    cout << "x_arrh: " << x_arrh << endl;
-    //    for (int i = 0; i < len_xarr; i++) {
-    //        cout << x_arr[i] << endl;
-    //        cout << x_arrh[i] << endl;
-    //    }
+    //mat.LeaveDataPtrCSR(&ind, &col, &val);
+    //rhs.LeaveDataPtr(&b_arr);
+    //x.LeaveDataPtr(&x_arr);
+    
+    //for (int i = 0; i < len_xarr; i++) {
+    //    cout << x_arr_bak[i] << endl;
+    //}
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
 
     cout << "Free memory" << endl;
     tock = paralution_time();
-    ls.Clear();
+    //ls.Clear();
     stop_paralution();
     tick = paralution_time();
     cout << "Solver free + stop:" << (tick - tock) / 1000000 << " sec" << endl;
