@@ -117,19 +117,21 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
 
-    //mat.MoveToHost();
-    //rhs.MoveToHost();
+    mat.MoveToHost();
+    rhs.MoveToHost();
     x.MoveToHost();
     //deep copy x back to python
     x.CopyToData(x_arr_bak);
     // call LeaveDataPtr* for all!!! objects/buffers that were created by SetDataPtr 
-    //mat.LeaveDataPtrCSR(&ind, &col, &val);
-    //rhs.LeaveDataPtr(&b_arr);
-    //x.LeaveDataPtr(&x_arr);
+    // if there is no accelerator segfaults will occur else. 
+    mat.LeaveDataPtrCSR(&ind, &col, &val);
+    rhs.LeaveDataPtr(&b_arr);
+    x.LeaveDataPtr(&x_arr);
     
-    //for (int i = 0; i < len_xarr; i++) {
-    //    cout << x_arr_bak[i] << endl;
-    //}
+    for (int i = 0; i < len_xarr; i++) {
+        cout << x_arr[i] << endl;
+        cout << x_arr_bak[i] << endl;
+    }
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
 
