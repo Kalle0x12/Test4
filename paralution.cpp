@@ -24,14 +24,14 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     py::buffer_info info_columns = columns.request();
     auto col = static_cast<int *> (info_columns.ptr);
     py::buffer_info info_index = index.request();
-    auto ind = static_cast<int *> (info_index.ptr);
+    auto row_offsets = static_cast<int *> (info_index.ptr);
     py::buffer_info info_x = x_vec.request();
-    auto x_arr = static_cast<T *> (info_x.ptr);
+    auto xptr = static_cast<T *> (info_x.ptr);
     // save x_arr
-    auto x_arr_bak = x_arr;
+    auto xptr_bak = xptr;
     len_xarr = info_x.shape[0];
     py::buffer_info info_b = b_vec.request();
-    auto b_arr = static_cast<T *> (info_b.ptr);
+    auto bptr = static_cast<T *> (info_b.ptr);
     start = paralution_time();
     //init_paralution();
     if (info == 1) info_paralution();
@@ -39,8 +39,8 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "Solver  init: " << (tock - start) / 1000000 << " sec" << endl;
     //initialize paralution vector/matrix objects
     LocalVector<T> x;
-    LocalVector<T> rhs;
-    LocalMatrix<T> mat;
+    LocalVector<T> b;
+    LocalMatrix<T> A;
     //deep copy
     //mat.AllocateCSR("A", nnz, len_xarr, len_xarr);
     //mat.CopyFromCSR(ind, col, val);
@@ -54,44 +54,45 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
 
     cout << "col: " << col << endl;
     cout << "val: " << val << endl;
-    cout << "ind: " << ind << endl;
+    cout << "ind: " << row_offsets << endl;
     cout << "A" << endl;
-    mat.SetDataPtrCSR(&ind, &col, &val, "A", nnz, len_xarr, len_xarr);
+    A.SetDataPtrCSR(&row_offsets, &col, &val, "A", nnz, len_xarr, len_xarr);
     cout << "col: " << col << endl;
     cout << "val: " << val << endl;
-    cout << "ind: " << ind << endl;
-    mat.info();
+    cout << "ind: " << row_offsets << endl;
+    A.info();
 
     cout << "x" << endl;
     // deep copy
     //x.Allocate("x", len_xarr);
     //x.CopyFromData(x_arr);
 
-    cout << "x_arr: " << x_arr << endl;
-    cout << "x_arr_bak: " << x_arr_bak << endl;
-    x.SetDataPtr(&x_arr, "x", len_xarr);
-    cout << "x_arr: " << x_arr << endl;
-    cout << "x_arr_bak: " << x_arr_bak << endl;
+    cout << "x_arr: " << xptr << endl;
+    cout << "x_arr_bak: " << xptr_bak << endl;
+    x.SetDataPtr(&xptr, "x", len_xarr);
+    cout << "x_arr: " << xptr << endl;
+    cout << "x_arr_bak: " << xptr_bak << endl;
     x.info();
     cout << "rhs" << endl;
     // deep copy
     //rhs.Allocate("rhs", len_xarr);
     //rhs.CopyFromData(b_arr);
-    cout << "b_arr: " << b_arr << endl;
-    rhs.SetDataPtr(&b_arr, "rhs", len_xarr);
-    cout << "b_arr: " << b_arr << endl;
+    cout << "b_arr: " << bptr << endl;
+    b.SetDataPtr(&bptr, "rhs", len_xarr);
+    cout << "b_arr: " << bptr << endl;
     // MyMoveToAccelerator avoids free() of the buffers passed from python  
     // in stop_paralution()
-    cout << "x_arr: " << x_arr << endl;
-    cout << "x_arr_bak: " << x_arr_bak << endl;
+    cout << "x_arr: " << xptr << endl;
+    cout << "x_arr_bak: " << xptr_bak << endl;
+    cout << "x.MyMoveToAccelerator()" << endl;
     x.MyMoveToAccelerator();
-    cout << "x_arr: " << x_arr << endl;
-    cout << "x_arr_bak: " << x_arr_bak << endl;
-    rhs.MyMoveToAccelerator();
-    mat.MyMoveToAccelerator();
+    cout << "x_arr: " << xptr << endl;
+    cout << "x_arr_bak: " << xptr_bak << endl;
+    b.MyMoveToAccelerator();
+    A.MyMoveToAccelerator();
     x.info();
-    rhs.info();
-    mat.info();
+    b.info();
+    A.info();
 
     tick = paralution_time();
     cout << "Solver allocate: " << (tick - tock) / 1000000 << " sec" << endl;
@@ -101,7 +102,7 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     ls.MoveToAccelerator();
     // Preconditioner
     Jacobi<LocalMatrix<T>, LocalVector<T>, T > p;
-    ls.SetOperator(mat);
+    ls.SetOperator(A);
     // initialize linear solver
     ls.Init(abs_tol, rel_tol, div_tol, max_iter);
     ls.SetPreconditioner(p);
@@ -112,25 +113,25 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "Solver setup + Build: " << (tick - tock) / 1000000 << " sec" << endl;
 
     tock = paralution_time();
-    ls.Solve(rhs, &x);
+    ls.Solve(b, &x);
     tick = paralution_time();
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
 
-    mat.MoveToHost();
-    rhs.MoveToHost();
+    A.MoveToHost();
+    b.MoveToHost();
     x.MoveToHost();
     //deep copy x back to python
-    x.CopyToData(x_arr_bak);
+    x.CopyToData(xptr_bak);
     // call LeaveDataPtr* for all!!! objects/buffers that were created by SetDataPtr 
     // if there is no accelerator segfaults will occur else. 
-    mat.LeaveDataPtrCSR(&ind, &col, &val);
-    rhs.LeaveDataPtr(&b_arr);
-    x.LeaveDataPtr(&x_arr);
+    A.LeaveDataPtrCSR(&row_offsets, &col, &val);
+    b.LeaveDataPtr(&bptr);
+    x.LeaveDataPtr(&xptr);
     
     for (int i = 0; i < len_xarr; i++) {
-        cout << x_arr[i] << endl;
-        cout << x_arr_bak[i] << endl;
+        cout << xptr[i] << endl;
+        cout << xptr_bak[i] << endl;
     }
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
