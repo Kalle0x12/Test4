@@ -1,6 +1,6 @@
-diff -Naur paralution-1.1.0/src/base/backend_manager.cpp ../paralution-1.1.0/src/base/backend_manager.cpp
+diff -Naur paralution-1.1.0/src/base/backend_manager.cpp myparalution-1.1.0/src/base/backend_manager.cpp
 --- paralution-1.1.0/src/base/backend_manager.cpp	2016-01-19 08:14:41.000000000 +0100
-+++ ../paralution-1.1.0/src/base/backend_manager.cpp	2016-12-02 18:35:18.443567764 +0100
++++ myparalution-1.1.0/src/base/backend_manager.cpp	2016-12-03 17:47:14.207097255 +0100
 @@ -768,7 +768,8 @@
                Paralution_Object_Data_Tracking.all_obj[i]);
  
@@ -11,9 +11,9 @@ diff -Naur paralution-1.1.0/src/base/backend_manager.cpp ../paralution-1.1.0/src
    LOG_DEBUG(0, "_paralution_delete_all_obj()",
              "* end");
  #endif
-diff -Naur paralution-1.1.0/src/base/local_matrix.cpp ../paralution-1.1.0/src/base/local_matrix.cpp
+diff -Naur paralution-1.1.0/src/base/local_matrix.cpp myparalution-1.1.0/src/base/local_matrix.cpp
 --- paralution-1.1.0/src/base/local_matrix.cpp	2016-01-19 08:14:41.000000000 +0100
-+++ ../paralution-1.1.0/src/base/local_matrix.cpp	2016-12-02 18:50:08.697447503 +0100
++++ myparalution-1.1.0/src/base/local_matrix.cpp	2016-12-03 17:47:14.208097248 +0100
 @@ -1551,6 +1551,36 @@
  }
  
@@ -51,9 +51,9 @@ diff -Naur paralution-1.1.0/src/base/local_matrix.cpp ../paralution-1.1.0/src/ba
  void LocalMatrix<ValueType>::MoveToHost(void) {
  
    LOG_DEBUG(this, "LocalMatrix::MoveToHost()",
-diff -Naur paralution-1.1.0/src/base/local_matrix.hpp ../paralution-1.1.0/src/base/local_matrix.hpp
+diff -Naur paralution-1.1.0/src/base/local_matrix.hpp myparalution-1.1.0/src/base/local_matrix.hpp
 --- paralution-1.1.0/src/base/local_matrix.hpp	2016-01-19 08:14:41.000000000 +0100
-+++ ../paralution-1.1.0/src/base/local_matrix.hpp	2016-12-02 18:51:42.145169756 +0100
++++ myparalution-1.1.0/src/base/local_matrix.hpp	2016-12-03 17:47:14.209097240 +0100
 @@ -283,6 +283,7 @@
    void WriteFileCSR(const std::string filename) const;
    
@@ -62,9 +62,9 @@ diff -Naur paralution-1.1.0/src/base/local_matrix.hpp ../paralution-1.1.0/src/ba
    virtual void MoveToAcceleratorAsync(void);
    virtual void MoveToHost(void);
    virtual void MoveToHostAsync(void);
-diff -Naur paralution-1.1.0/src/base/local_vector.cpp ../paralution-1.1.0/src/base/local_vector.cpp
+diff -Naur paralution-1.1.0/src/base/local_vector.cpp myparalution-1.1.0/src/base/local_vector.cpp
 --- paralution-1.1.0/src/base/local_vector.cpp	2016-01-19 08:14:41.000000000 +0100
-+++ ../paralution-1.1.0/src/base/local_vector.cpp	2016-12-02 18:50:59.577840502 +0100
++++ myparalution-1.1.0/src/base/local_vector.cpp	2016-12-05 19:47:43.882094759 +0100
 @@ -177,7 +177,7 @@
  
  template <typename ValueType>
@@ -108,14 +108,52 @@ diff -Naur paralution-1.1.0/src/base/local_vector.cpp ../paralution-1.1.0/src/ba
  void LocalVector<ValueType>::MoveToHost(void) {
  
    LOG_DEBUG(this, "LocalVector::MoveToHost()",
-diff -Naur paralution-1.1.0/src/base/local_vector.hpp ../paralution-1.1.0/src/base/local_vector.hpp
+@@ -411,6 +438,34 @@
+ }
+ 
+ template <typename ValueType>
++void LocalVector<ValueType>::MyMoveToHost(ValueType **ptr, const int size) {
++
++  LOG_DEBUG(this, "LocalVector::MyMoveToHost()",
++            "");
++
++  if (_paralution_available_accelerator() == false)
++    LOG_VERBOSE_INFO(4,"*** info: LocalVector::MyMoveToHost() no accelerator available - doing nothing");
++
++  if ( (_paralution_available_accelerator() == true) &&
++       (this->vector_ == this->vector_accel_)) {
++
++    this->vector_host_ = new HostVector<ValueType>(this->local_backend_);
++    this->vector_host_->SetDataPtr(ptr, size);
++
++    // Copy to host
++    this->vector_host_->CopyFrom(*this->vector_accel_);
++
++    this->vector_ = this->vector_host_;
++    delete this->vector_accel_;
++    this->vector_accel_ = NULL;
++
++    LOG_VERBOSE_INFO(4, "*** info: LocalVector::MyMoveToHost() accelerator to host transfer");
++
++  }
++
++}
++
++template <typename ValueType>
+ void LocalVector<ValueType>::MoveToAcceleratorAsync(void) {
+ 
+   LOG_DEBUG(this, "LocalVector::MoveToAcceleratorAsync()",
+diff -Naur paralution-1.1.0/src/base/local_vector.hpp myparalution-1.1.0/src/base/local_vector.hpp
 --- paralution-1.1.0/src/base/local_vector.hpp	2016-01-19 08:14:41.000000000 +0100
-+++ ../paralution-1.1.0/src/base/local_vector.hpp	2016-12-02 18:51:22.825020474 +0100
-@@ -56,6 +56,7 @@
++++ myparalution-1.1.0/src/base/local_vector.hpp	2016-12-05 19:50:25.126769410 +0100
+@@ -56,8 +56,10 @@
    virtual ~LocalVector();
  
    virtual void MoveToAccelerator(void);
 +  virtual void MyMoveToAccelerator(void);
    virtual void MoveToAcceleratorAsync(void);
    virtual void MoveToHost(void);
++  virtual void MyMoveToHost(ValueType **ptr, const int size);
    virtual void MoveToHostAsync(void);
+   virtual void Sync(void);
+ 
