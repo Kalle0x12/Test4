@@ -69,7 +69,7 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
 
     cout << "xptr: " << xptr << endl;
     cout << "xptr_bak: " << xptr_bak << endl;
-    x.SetDataPtr(&xptr, "x", len_x);
+    //x.SetDataPtr(&xptr, "x", len_x);
     cout << "xptr: " << xptr << endl;
     cout << "xptr_bak: " << xptr_bak << endl;
     x.info();
@@ -78,16 +78,16 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     //b.Allocate("b", len_x);
     //b.CopyFromData(bptr);
     cout << "bptr: " << bptr << endl;
-    b.SetDataPtr(&bptr, "b", len_x);
+    //b.SetDataPtr(&bptr, "b", len_x);
     cout << "bptr: " << bptr << endl;
     // MyMoveToAccelerator avoids free() of the buffers passed from python  
     // in stop_paralution()
     cout << "xptr: " << xptr << endl;
     cout << "xptr_bak: " << xptr_bak << endl;
-    x.MyMoveToAccelerator();
+    x.MyMoveToAccelerator(&xptr, len_x);
     cout << "xptr: " << xptr << endl;
     cout << "xptr_bak: " << xptr_bak << endl;
-    b.MyMoveToAccelerator();
+    b.MyMoveToAccelerator(&bptr, len_x);
     A.MyMoveToAccelerator();
     x.info();
     b.info();
@@ -98,7 +98,7 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     tock = paralution_time();
     // Linear Solver
     CG<LocalMatrix<T>, LocalVector<T>, T> ls;
-    ls.MoveToAccelerator();
+    //ls.MoveToAccelerator();
     // Preconditioner
     Jacobi<LocalMatrix<T>, LocalVector<T>, T > p;
     ls.SetOperator(A);
@@ -117,18 +117,26 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "Solver Solve:" << (tick - tock) / 1000000 << " sec" << endl;
     tock = paralution_time();
 
-    A.MoveToHost();
-    b.MoveToHost();
+    //A.MoveToHost();
+    //b.MoveToHost();
     //x.MoveToHost();
-    x.MyMoveToHost(&xptr_bak, len_x);
+        cout << "xptr: " << xptr << endl;
+    cout << "xptr_bak: " << xptr_bak << endl;
+    x.MyMoveToHost();
+        cout << "xptr: " << xptr << endl;
+    cout << "xptr_bak: " << xptr_bak << endl;
     //deep copy x back to python
-    //x.CopyToData(xptr_bak);
+    //x.CopyToData(xptr);
     // call LeaveDataPtr* for all!!! objects/buffers that were created by SetDataPtr 
     // if there is no accelerator segfaults will occur else. 
-    A.LeaveDataPtrCSR(&row_offsets, &col, &val);
-    b.LeaveDataPtr(&bptr);
-    x.LeaveDataPtr(&xptr);
-    
+    //A.LeaveDataPtrCSR(&row_offsets, &col, &val);
+    //b.LeaveDataPtr(&bptr);
+        cout << "xptr: " << xptr << endl;
+    cout << "xptr_bak: " << xptr_bak << endl;
+    //x.LeaveDataPtr(&xptr);
+    //xptr=xptr_bak;
+        cout << "xptr: " << xptr << endl;
+    cout << "xptr_bak: " << xptr_bak << endl;
     for (int i = 0; i < len_x; i++) {
         cout << xptr[i] << endl;
         cout << xptr_bak[i] << endl;
