@@ -28,8 +28,6 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     auto row_offsets = static_cast<int *> (info_index.ptr);
     py::buffer_info info_x = x_vec.request();
     auto xptr = static_cast<T *> (info_x.ptr);
-    // save xptr
-    auto xptr_bak = xptr;
     len_x = info_x.shape[0];
     py::buffer_info info_b = b_vec.request();
     auto bptr = static_cast<T *> (info_b.ptr);
@@ -68,10 +66,8 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     //x.CopyFromData(xptr);
 
     cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
     //x.SetDataPtr(&xptr, "x", len_x);
     cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
     x.info();
     cout << "bptr" << endl;
     // deep copy
@@ -83,10 +79,8 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     // MyMoveToAccelerator avoids free() of the buffers passed from python  
     // in stop_paralution()
     cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
     x.MyMoveToAccelerator(&xptr, len_x);
     cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
     b.MyMoveToAccelerator(&bptr, len_x);
     A.MyMoveToAccelerator();
     x.info();
@@ -118,29 +112,18 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     tock = paralution_time();
 
     A.MoveToHost();
-    //b.MoveToHost();
-    //x.MoveToHost();
-        cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
+    cout << "xptr: " << xptr << endl;
     x.MyMoveToHost(&xptr, len_x);
-        cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
+    cout << "xptr: " << xptr << endl;
     b.MyMoveToHost(&bptr, len_x);
     //deep copy x back to python
     //x.CopyToData(xptr);
     // call LeaveDataPtr* for all!!! objects/buffers that were created by SetDataPtr 
     // if there is no accelerator segfaults will occur else. 
     A.LeaveDataPtrCSR(&row_offsets, &col, &val);
-    //b.LeaveDataPtr(&bptr);
-        cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
-    //x.LeaveDataPtr(&xptr);
-    //xptr=xptr_bak;
-        cout << "xptr: " << xptr << endl;
-    cout << "xptr_bak: " << xptr_bak << endl;
+    cout << "xptr: " << xptr << endl;
     for (int i = 0; i < len_x; i++) {
         cout << xptr[i] << endl;
-        cout << xptr_bak[i] << endl;
     }
     tick = paralution_time();
     cout << "Solver copy result:" << (tick - tock) / 1000000 << " sec" << endl;
