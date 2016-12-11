@@ -1,6 +1,6 @@
 diff -Naur ../paralution-1.1.0/src/base/backend_manager.cpp paralution-1.1.0/src/base/backend_manager.cpp
 --- ../paralution-1.1.0/src/base/backend_manager.cpp	2016-01-19 08:14:41.000000000 +0100
-+++ paralution-1.1.0/src/base/backend_manager.cpp	2016-12-10 12:57:44.188597954 +0100
++++ paralution-1.1.0/src/base/backend_manager.cpp	2016-12-11 15:11:17.711398806 +0100
 @@ -768,7 +768,8 @@
                Paralution_Object_Data_Tracking.all_obj[i]);
  
@@ -13,7 +13,7 @@ diff -Naur ../paralution-1.1.0/src/base/backend_manager.cpp paralution-1.1.0/src
  #endif
 diff -Naur ../paralution-1.1.0/src/base/local_matrix.cpp paralution-1.1.0/src/base/local_matrix.cpp
 --- ../paralution-1.1.0/src/base/local_matrix.cpp	2016-01-19 08:14:41.000000000 +0100
-+++ paralution-1.1.0/src/base/local_matrix.cpp	2016-12-10 12:57:44.189597962 +0100
++++ paralution-1.1.0/src/base/local_matrix.cpp	2016-12-11 15:11:17.713398794 +0100
 @@ -1551,6 +1551,36 @@
  }
  
@@ -53,7 +53,7 @@ diff -Naur ../paralution-1.1.0/src/base/local_matrix.cpp paralution-1.1.0/src/ba
    LOG_DEBUG(this, "LocalMatrix::MoveToHost()",
 diff -Naur ../paralution-1.1.0/src/base/local_matrix.hpp paralution-1.1.0/src/base/local_matrix.hpp
 --- ../paralution-1.1.0/src/base/local_matrix.hpp	2016-01-19 08:14:41.000000000 +0100
-+++ paralution-1.1.0/src/base/local_matrix.hpp	2016-12-10 12:57:44.191597978 +0100
++++ paralution-1.1.0/src/base/local_matrix.hpp	2016-12-11 15:11:17.713398794 +0100
 @@ -283,6 +283,7 @@
    void WriteFileCSR(const std::string filename) const;
    
@@ -64,7 +64,7 @@ diff -Naur ../paralution-1.1.0/src/base/local_matrix.hpp paralution-1.1.0/src/ba
    virtual void MoveToHostAsync(void);
 diff -Naur ../paralution-1.1.0/src/base/local_vector.cpp paralution-1.1.0/src/base/local_vector.cpp
 --- ../paralution-1.1.0/src/base/local_vector.cpp	2016-01-19 08:14:41.000000000 +0100
-+++ paralution-1.1.0/src/base/local_vector.cpp	2016-12-10 20:33:25.569459442 +0100
++++ paralution-1.1.0/src/base/local_vector.cpp	2016-12-11 15:24:35.375471106 +0100
 @@ -177,7 +177,7 @@
  
  template <typename ValueType>
@@ -113,11 +113,11 @@ diff -Naur ../paralution-1.1.0/src/base/local_vector.cpp paralution-1.1.0/src/ba
  void LocalVector<ValueType>::MoveToHost(void) {
  
    LOG_DEBUG(this, "LocalVector::MoveToHost()",
-@@ -411,6 +443,38 @@
+@@ -411,6 +443,37 @@
  }
  
  template <typename ValueType>
-+void LocalVector<ValueType>::MyMoveToHost(void) {
++void LocalVector<ValueType>::MyMoveToHost(ValueType **ptr, const int size) {
 +
 +  LOG_DEBUG(this, "LocalVector::MyMoveToHost()",
 +            "");
@@ -129,8 +129,8 @@ diff -Naur ../paralution-1.1.0/src/base/local_vector.cpp paralution-1.1.0/src/ba
 +       (this->vector_ == this->vector_accel_)) {
 +
 +    //this->vector_host_ = new HostVector<ValueType>(this->local_backend_);
-+    //this->vector_host_->vec_ = *ptr;
-+    //this->vector_host_->size_ = size;
++    this->vector_host_->vec_ = *ptr;
++    this->vector_host_->size_ = size;
 +    
 +    // Copy to host
 +    this->vector_host_->CopyFrom(*this->vector_accel_);
@@ -139,12 +139,11 @@ diff -Naur ../paralution-1.1.0/src/base/local_vector.cpp paralution-1.1.0/src/ba
 +    delete this->vector_accel_;
 +    this->vector_accel_ = NULL;
 +
-+    this->vector_host_->vec_ = NULL;
-+    this->vector_host_->size_ = 0;
-+    
 +    LOG_VERBOSE_INFO(4, "*** info: LocalVector::MyMoveToHost() accelerator to host transfer");
 +
 +  }
++    this->vector_host_->vec_ = NULL;
++    this->vector_host_->size_ = 0;
 +
 +}
 +
@@ -154,7 +153,7 @@ diff -Naur ../paralution-1.1.0/src/base/local_vector.cpp paralution-1.1.0/src/ba
    LOG_DEBUG(this, "LocalVector::MoveToAcceleratorAsync()",
 diff -Naur ../paralution-1.1.0/src/base/local_vector.hpp paralution-1.1.0/src/base/local_vector.hpp
 --- ../paralution-1.1.0/src/base/local_vector.hpp	2016-01-19 08:14:41.000000000 +0100
-+++ paralution-1.1.0/src/base/local_vector.hpp	2016-12-10 20:25:07.389609689 +0100
++++ paralution-1.1.0/src/base/local_vector.hpp	2016-12-11 15:25:02.068275853 +0100
 @@ -56,8 +56,10 @@
    virtual ~LocalVector();
  
@@ -162,7 +161,7 @@ diff -Naur ../paralution-1.1.0/src/base/local_vector.hpp paralution-1.1.0/src/ba
 +  virtual void MyMoveToAccelerator(ValueType **ptr, const int size);
    virtual void MoveToAcceleratorAsync(void);
    virtual void MoveToHost(void);
-+  virtual void MyMoveToHost(void);
++  virtual void MyMoveToHost(ValueType **ptr, const int size);
    virtual void MoveToHostAsync(void);
    virtual void Sync(void);
  
