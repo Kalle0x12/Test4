@@ -54,6 +54,8 @@ before_install:
   # Initialize enviornment
   if [ -n "$DOCKER" ]; then
     docker pull $DOCKER
+    # Disable LTO with gcc until gcc 79296 is fixed:
+    export CMAKE_EXTRA_ARGS="${CMAKE_EXTRA_ARGS} -DPYBIND11_LTO_CXX_FLAGS="
     export containerid=$(docker run --detach --tty \
       --volume="$PWD":/pybind11 --workdir=/pybind11 \
       --env="CC=$CC" --env="CXX=$CXX" --env="DEBIAN_FRONTEND=$DEBIAN_FRONTEND" \
