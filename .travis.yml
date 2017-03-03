@@ -89,6 +89,10 @@ install:
       libeigen3-dev cmake make g++ git-all wget && break; done"
   else
     pip install numpy scipy pytest
+    
+    wget -q -O eigen.tar.gz https://bitbucket.org/eigen/eigen/get/3.3.0.tar.gz
+    tar xzf eigen.tar.gz
+    export CMAKE_EXTRA_ARGS="${CMAKE_EXTRA_ARGS} -DCMAKE_INCLUDE_PATH=$PWD/eigen-eigen-26667be4f70b"    
   fi
   
 script:
