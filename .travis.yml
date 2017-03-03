@@ -99,7 +99,7 @@ script:
  - $SCRIPT_RUN_PREFIX ls -alh
  - $SCRIPT_RUN_PREFIX echo $PYTHON
  - $SCRIPT_RUN_PREFIX echo $CPPV 
- - $SCRIPT_RUN_PREFIX ./install-pybind11.sh $PYTHON $CPPV 
+ - $SCRIPT_RUN_PREFIX ./install-pybind11.sh $PYTHON $CPPV ${CMAKE_EXTRA_ARGS}
  - $SCRIPT_RUN_PREFIX pwd
  - $SCRIPT_RUN_PREFIX ls -alh
  - $SCRIPT_RUN_PREFIX ./clean.sh
