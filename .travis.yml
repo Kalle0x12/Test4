@@ -6,14 +6,24 @@ matrix:
     env: PYTHON=2.7 CPPV=11 GCC=4.8
     addons:
       apt:
-        sources: [ubuntu-toolchain-r-test, kubuntu-backports]
-        packages: [g++-4.8, cmake]
+        sources:
+        - ubuntu-toolchain-r-test
+        - kubuntu-backports
+        packages:
+        - g++-4.8
+        - cmake
   - os: linux
     env: PYTHON=3.5 CPPV=11 GCC=4.8
     addons:
       apt:
-        sources: [ubuntu-toolchain-r-test, kubuntu-backports, deadsnakes]
-        packages: [g++-4.8, cmake, python3.5-dev]
+        sources:
+        - ubuntu-toolchain-r-test
+        - kubuntu-backports
+        - deadsnakes
+        packages:
+        - g++-4.8
+        - cmake
+        - python3.5-dev
   - sudo: true
     services: docker
     env: PYTHON=2.7 CPPV=14 GCC=6
@@ -26,18 +36,6 @@ matrix:
   - os: osx
     osx_image: xcode7.3
     env: PYTHON=3.5 CPPV=14 CLANG
-# Documentation build:
-    #  - os: linux
-    #    language: docs
-    #    env: DOCS STYLE
-    #    install: pip install sphinx sphinx_rtd_theme
-    #    script:
-    #    - make -C docs html SPHINX_OPTIONS=-W
-    #    - tools/check-style.sh
-#cache:
-#  directories:
-#  - $HOME/.cache/pip
-#  - $HOME/Library/Caches/pip
 before_install:
 - |
   # Configure build variables
@@ -81,48 +79,40 @@ before_install:
     source venv/bin/activate
   fi
 install:
-- |
-  # Install dependencies
-  if [ -n "$DOCKER" ]; then
-    docker exec --tty "$containerid" sh -c "for s in 0 15; do sleep \$s; apt-get -qy --no-install-recommends install \
-      python$PYTHON-dev python$PY-pytest python$PY-scipy python$PY-numpy python$PY-setuptools \
-      libeigen3-dev cmake make g++ git-all wget && break; done"
-  else
-    pip install numpy scipy pytest
-    
-    wget -q -O eigen.tar.gz https://bitbucket.org/eigen/eigen/get/3.3.0.tar.gz
-    tar xzf eigen.tar.gz
-    export CMAKE_EXTRA_ARGS="${CMAKE_EXTRA_ARGS} -DCMAKE_INCLUDE_PATH=$PWD/eigen-eigen-26667be4f70b"    
-  fi
-  
+- "# Install dependencies\nif [ -n \"$DOCKER\" ]; then\n  docker exec --tty \"$containerid\"
+  sh -c \"for s in 0 15; do sleep \\$s; apt-get -qy --no-install-recommends install
+  \\\n    python$PYTHON-dev python$PY-pytest python$PY-scipy python$PY-numpy python$PY-setuptools
+  \\\n    libeigen3-dev cmake make g++ git-all wget && break; done\"\nelse\n  pip
+  install numpy scipy pytest\n  \n  wget -q -O eigen.tar.gz https://bitbucket.org/eigen/eigen/get/3.3.0.tar.gz\n
+  \ tar xzf eigen.tar.gz\n  export CMAKE_EXTRA_ARGS=\"${CMAKE_EXTRA_ARGS} -DCMAKE_INCLUDE_PATH=$PWD/eigen-eigen-26667be4f70b\"
+  \   \nfi\n"
 script:
- - $SCRIPT_RUN_PREFIX pwd
- - $SCRIPT_RUN_PREFIX  ./install-paralution.sh
- - $SCRIPT_RUN_PREFIX  echo $LD_LIBRARY_PATH
- - $SCRIPT_RUN_PREFIX pwd
- - $SCRIPT_RUN_PREFIX ls -alh
- - $SCRIPT_RUN_PREFIX echo $PYTHON
- - $SCRIPT_RUN_PREFIX echo $CPPV 
- - $SCRIPT_RUN_PREFIX ./install-pybind11.sh $PYTHON $CPPV ${CMAKE_EXTRA_ARGS}
- - $SCRIPT_RUN_PREFIX pwd
- - $SCRIPT_RUN_PREFIX ls -alh
- - $SCRIPT_RUN_PREFIX ./clean.sh
- - $SCRIPT_RUN_PREFIX python$PY --version
- - |
-   if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-       $SCRIPT_RUN_PREFIX python$PY build.py build_ext --inplace
-    elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-       $SCRIPT_RUN_PREFIX python$PY build_mac.py build_ext --inplace
-    fi
- - $SCRIPT_RUN_PREFIX ls -alh
- - $SCRIPT_RUN_PREFIX ./run_test.sh python$PY
-
+- "$SCRIPT_RUN_PREFIX pwd"
+- "$SCRIPT_RUN_PREFIX  ./install-paralution.sh"
+- "$SCRIPT_RUN_PREFIX  echo $LD_LIBRARY_PATH"
+- "$SCRIPT_RUN_PREFIX pwd"
+- "$SCRIPT_RUN_PREFIX ls -alh"
+- "$SCRIPT_RUN_PREFIX echo $PYTHON"
+- "$SCRIPT_RUN_PREFIX echo $CPPV"
+- "$SCRIPT_RUN_PREFIX ./install-pybind11.sh $PYTHON $CPPV ${CMAKE_EXTRA_ARGS}"
+- "$SCRIPT_RUN_PREFIX pwd"
+- "$SCRIPT_RUN_PREFIX ls -alh"
+- "$SCRIPT_RUN_PREFIX ./clean.sh"
+- "$SCRIPT_RUN_PREFIX python$PY --version"
+- |
+  if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      $SCRIPT_RUN_PREFIX python$PY build.py build_ext --inplace
+   elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      $SCRIPT_RUN_PREFIX python$PY build_mac.py build_ext --inplace
+   fi
+- "$SCRIPT_RUN_PREFIX ls -alh"
+- "$SCRIPT_RUN_PREFIX ./run_test.sh python$PY"
 after_script:
-- if [ -n "$DOCKER" ]; then docker stop "$containerid"; docker rm "$containerid"; fi
-
+- if [ -n "$DOCKER" ]; then docker stop "$containerid"; docker rm "$containerid";
+  fi
 notifications:
   email:
     recipients:
-      secure: da70mnM8HmZa3K78IhS4QyEdoxZkgKjqkTnKB30Qbz0qsWg9rdayUTAnk8zi5R+ik9V3NAWSdzyhsMRSB9/j9+YQFNmoa8C95tBWgTOuc2t1XHQgWyMu/32CC4wypdXe3z8pdrncG9G04GZ6Dr9zt8+Jz9LBHA693oLAO+SUgamFk0vV60kxTX6KE+HNOIEfVY6NDas2EGx1KWXxb63l83iNDr/2ax3m4mnOtm48zml5W4qsDlQiJpd0Kq4OEuMdEmro0c4dO/0BcroPqycz/Ek0WXOih03FKR3P+ed72YpmwzivO+OQm5bvay8oq9lsRn9J3/UjdePdoBdN0e62U0cshfe4Cb5IDEZHrJv03uoTQFw+NtA9KKCa7omJ3x+S3c6STYRsgBFP53HaV9ECrUbONYkOTZHBj6xzpZdVqXluTdeRxly/5lMTdYnpUW7jfNlAce6nR2RycjeGr4/Jz2EF9ZxyN4jS9VrcUyJyyOFKJm+S8mcR/nuyp9YtEK0gaS4Sjp4r4PDyS3u8TZnjeHrmpYDDek671cig9t6VoM+oSRdfYac8M2e23flYz3qGflWaosYBZ6IYhmCq4ZsXsBdvZQpa3WgbXPlPsZ1T/PHnIfDoXxOYhfKv+5nzGBL266IWdqnG15E33Pi6Bcg7I1ZIg6bEPgX8ChYlSmyNXQo=
-    on_success: always # default: change
-    on_failure: always # default: always
+      secure: SoG6KL0WPb9MrQFNcDaX5F2hCPo+vivtBC1LLeYIDycGP/J2cqwzimWPtL30BphuX54TKAUMllWPSBtQXKE32DKCkpYdhq0WGPQqtUlQkn0N0LQK5rQk3zYMM9ZA3dWF6r0AC51kGOgbuD7WlKXYOfp8ukejlk+q2ILovBa4CIZNXVtyUX+hXuRfbtQtjxyEeb7521PxJhG13MvUux/cOQlZjyg4EM6oNGx+778t0LPGCGUh4pKUY5MQelBsw79m/GAEJveQbLkzJIKS71B1+Q+pkSjNcVsW/8hkob8l1NzteOvkzcsxjgr2zLpB1CcsJPKBn8oGU7vQBSqlS/KC/7iCZELHRWK7zS+wlU3Rm5CNS18MEeWtwkUKt699bfVgyrlTvq8x2igUfylVnMaJmEFORksMtnXFKjHVxB/EdzxxW13SOV5Kcr3qQWy5Ya3XdlZULGTdX5qX9EWmgVzSZJilaa3iOW671bWG3Tob07OW79WOaIYMALtWv+J1ty7FnoLstDu+WczArqnfbYApANDlmKynR7Y1GdE4uUsxYcb8WWJF3VlrHWs7FCvpr+/fvlqPF077bh2Tf5wDgBOjqOHrSNYXWORFjjWiOUdrhOeHJXofuWhYn0La5fTrove5mDndc/S+pVNO2JCr8N/gS7ia4BSsvPWyGmaZzvo9/mg=
+    on_success: always
+    on_failure: always
