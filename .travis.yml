@@ -119,3 +119,10 @@ script:
 
 after_script:
 - if [ -n "$DOCKER" ]; then docker stop "$containerid"; docker rm "$containerid"; fi
+
+notifications:
+  email:
+    recipients:
+      secure: da70mnM8HmZa3K78IhS4QyEdoxZkgKjqkTnKB30Qbz0qsWg9rdayUTAnk8zi5R+ik9V3NAWSdzyhsMRSB9/j9+YQFNmoa8C95tBWgTOuc2t1XHQgWyMu/32CC4wypdXe3z8pdrncG9G04GZ6Dr9zt8+Jz9LBHA693oLAO+SUgamFk0vV60kxTX6KE+HNOIEfVY6NDas2EGx1KWXxb63l83iNDr/2ax3m4mnOtm48zml5W4qsDlQiJpd0Kq4OEuMdEmro0c4dO/0BcroPqycz/Ek0WXOih03FKR3P+ed72YpmwzivO+OQm5bvay8oq9lsRn9J3/UjdePdoBdN0e62U0cshfe4Cb5IDEZHrJv03uoTQFw+NtA9KKCa7omJ3x+S3c6STYRsgBFP53HaV9ECrUbONYkOTZHBj6xzpZdVqXluTdeRxly/5lMTdYnpUW7jfNlAce6nR2RycjeGr4/Jz2EF9ZxyN4jS9VrcUyJyyOFKJm+S8mcR/nuyp9YtEK0gaS4Sjp4r4PDyS3u8TZnjeHrmpYDDek671cig9t6VoM+oSRdfYac8M2e23flYz3qGflWaosYBZ6IYhmCq4ZsXsBdvZQpa3WgbXPlPsZ1T/PHnIfDoXxOYhfKv+5nzGBL266IWdqnG15E33Pi6Bcg7I1ZIg6bEPgX8ChYlSmyNXQo=
+    on_success: always # default: change
+    on_failure: always # default: always
