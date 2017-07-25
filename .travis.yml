@@ -1,4 +1,5 @@
 language: cpp
+dist: trusty
 sudo: false
 matrix:
   include:
@@ -6,24 +7,13 @@ matrix:
     env: PYTHON=2.7 CPPV=11 GCC=4.8
     addons:
       apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - kubuntu-backports
-        packages:
-        - g++-4.8
-        - cmake
+        packages: [cmake=2.\*, cmake-data=2.\*]
   - os: linux
-    env: PYTHON=3.5 CPPV=11 GCC=4.8
+    env: PYTHON=3.6 CPPV=11 GCC=4.8
     addons:
       apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - kubuntu-backports
-        - deadsnakes
-        packages:
-        - g++-4.8
-        - cmake
-        - python3.5-dev
+        sources: [deadsnakes]
+        packages: [python3.6-dev python3.6-venv, cmake=2.\*, cmake-data=2.\*]
   - sudo: true
     services: docker
     env: PYTHON=2.7 CPPV=14 GCC=6
@@ -82,7 +72,7 @@ install:
 - "# Install dependencies\nif [ -n \"$DOCKER\" ]; then\n  docker exec --tty \"$containerid\"
   sh -c \"for s in 0 15; do sleep \\$s; apt-get -qy --no-install-recommends install
   \\\n    python$PYTHON-dev python$PY-pytest python$PY-scipy python$PY-numpy python$PY-setuptools
-  \\\n    libeigen3-dev cmake make g++ git-all wget && break; done\"\nelse\n  pip
+  \\\n    libeigen3-dev cmake make g++ git-all wget patch && break; done\"\nelse\n  pip
   install numpy scipy pytest\n  \n  wget -q -O eigen.tar.gz https://bitbucket.org/eigen/eigen/get/3.3.0.tar.gz\n
   \ tar xzf eigen.tar.gz\n  export CMAKE_EXTRA_ARGS=\"${CMAKE_EXTRA_ARGS} -DCMAKE_INCLUDE_PATH=$PWD/eigen-eigen-26667be4f70b\"
   \   \nfi\n"
