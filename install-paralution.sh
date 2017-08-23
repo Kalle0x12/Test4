@@ -11,5 +11,5 @@ mkdir build
 cd build
 # Dont't build examples
 # gcc 7.1 needs -fpermissive to build paralution 1.1.0
-cmake -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_FLAGS= "-fpermissive" ..
+cmake -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_FLAGS="-fpermissive" ..
 make -j2
