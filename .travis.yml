@@ -1,5 +1,6 @@
 language: cpp
-dist: trusty
+#dist: trusty
+dist: precise
 sudo: false
 matrix:
   include:
