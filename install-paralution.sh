@@ -9,8 +9,7 @@ patch -p0 < paralution-cmake.patch
 cd paralution-1.1.0
 mkdir build
 cd build
-# Dont't build examples
-# gcc 7.1 needs -fpermissive to build paralution 1.1.0
 # -DCMAKE_CXX_FLAGS="-fpermissive"
+# Dont't build examples
 cmake -DBUILD_EXAMPLES=OFF ..
 make -j2
