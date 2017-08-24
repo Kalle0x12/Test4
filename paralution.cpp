@@ -138,8 +138,8 @@ void solution(py::array_t<T, py::array::c_style> values, py::array_t<int> column
     cout << "Solver total:" << (tick - start) / 1000000 << " sec" << endl;
 }
 
-PYBIND11_PLUGIN(paralution_wrapper) {
-    pybind11::module m("paralution_wrapper", "Test paralution interface");
+PYBIND11_MODULE(paralution_wrapper, m) {
+    m.doc() = "Test paralution interface";
     //selective functions
     //single precision
     m.def("solution", (void(*)(py::array_t<float, py::array::c_style>, py::array_t<int>,
@@ -149,6 +149,5 @@ PYBIND11_PLUGIN(paralution_wrapper) {
     m.def("solution", (void(*)(py::array_t<double, py::array::c_style>, py::array_t<int>,
             py::array_t<int>, py::array_t<double, py::array::c_style>, py::array_t<double, py::array::c_style>,
             int, double, double, double, int)) & solution, "Paralution solver for double arrays");
-
-    return m.ptr();
 }
+
